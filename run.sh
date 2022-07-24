@@ -1,2 +1,2 @@
 #!bin/bash
-cargo run < input.txt > output.txt
+time cargo run < input.txt > output.txt
