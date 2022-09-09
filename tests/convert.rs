@@ -13,11 +13,23 @@ macro_rules! convert_2d {
 }
 
 type NodeType = i32;
+
+// non-direction
 pub fn edges_to_g(n: usize, edges: &Vec<Vec<NodeType>>) -> Vec<Vec<NodeType>> {
     let mut g = vec![vec![]; n];
     for e in edges {
         g[e[0] as usize].push(e[1]);
         g[e[1] as usize].push(e[0]);
+    }
+
+    g
+}
+
+// directional
+pub fn edges_to_dig(n: usize, edges: &Vec<Vec<NodeType>>) -> Vec<Vec<NodeType>> {
+    let mut g = vec![vec![]; n];
+    for e in edges {
+        g[e[0] as usize].push(e[1]);
     }
 
     g
