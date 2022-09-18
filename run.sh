@@ -1,6 +1,10 @@
 #!bin/bash
 ulimit -s unlimited
 
+# for debuging at panic
+#rustc -C 'link-args=-Wl,-stack_size,0x20000000' ./src/main.rs
+#RUST_BACKTRACE=1 ./main < input.txt > output.txt
+
 # debug mode
 #rustc -C 'link-args=-Wl,-stack_size,0x20000000' ./src/main.rs
 #time ./main < input.txt > output.txt
