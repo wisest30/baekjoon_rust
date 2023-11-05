@@ -1,12 +1,12 @@
 pub fn linear_sieve_eratosthenes(n: i64) -> Vec<i64> {
     let mut minimum_prime_factor = vec![0; (n + 1) as usize];
-    let mut ret = Vec::new();
+    let mut primes = Vec::new();
     for i in 2..=n {
         if minimum_prime_factor[i as usize] == 0 {
             minimum_prime_factor[i as usize] = i;
-            ret.push(i);
+            primes.push(i);
         }
-        for &prime in ret.iter() {
+        for &prime in primes.iter() {
             let j = i * prime;
             if j > n || prime > minimum_prime_factor[i as usize] {
                 break;
@@ -15,7 +15,7 @@ pub fn linear_sieve_eratosthenes(n: i64) -> Vec<i64> {
         }
     }
 
-    ret
+    primes
 }
 
 #[test]
