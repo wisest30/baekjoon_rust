@@ -1,6 +1,7 @@
 struct DisjointSet {
     g: Vec<i32>,
     g_set: std::collections::HashSet<i32>,
+    cnts: Vec<usize>,
 }
 
 impl DisjointSet {
@@ -8,6 +9,7 @@ impl DisjointSet {
         DisjointSet {
             g: (0..n as i32).collect::<Vec<_>>(),
             g_set: (0..n as i32).collect::<std::collections::HashSet<_>>(),
+            cnts: vec![1; n],
         }
     }
 
@@ -29,12 +31,18 @@ impl DisjointSet {
         } else {
             self.g[gy as usize] = gx;
             self.g_set.remove(&gy);
+            self.cnts[gx as usize] += self.cnts[gy as usize];
             true
         }
     }
 
     pub fn get_group_set(&self) -> &std::collections::HashSet<i32> {
         &self.g_set
+    }
+
+    pub fn cnt(&mut self, x: i32) -> usize {
+        let g = self.group(x);
+        self.cnts[g as usize]
     }
 }
 
@@ -48,5 +56,11 @@ fn test_disjoint_set() {
     assert_eq!(ds.group(1), ds.group(2));
     assert_ne!(ds.group(0), ds.group(1));
     assert_eq!(ds.get_group_set().len(), 3);
-    assert!(!ds.merge(1, 2))
+    assert!(!ds.merge(1, 2));
+
+    assert_eq!(ds.cnt(0), 2);
+    assert_eq!(ds.cnt(1), 2);
+    assert_eq!(ds.cnt(2), 2);
+    assert_eq!(ds.cnt(3), 2);
+    assert_eq!(ds.cnt(4), 1);
 }
