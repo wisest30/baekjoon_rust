@@ -13,13 +13,14 @@ impl DisjointSet {
         }
     }
 
-    pub fn group(&mut self, x: i32) -> i32 {
-        if self.g[x as usize] == x {
-            x
-        } else {
-            self.g[x as usize] = self.group(self.g[x as usize]);
-            self.g[x as usize]
+    pub fn group(&mut self, mut x: i32) -> i32 {
+        while self.g[x as usize] != x {
+            let nx = self.g[x as usize];
+            self.g[x as usize] = self.g[nx as usize];
+            x = nx;
         }
+
+        x
     }
 
     pub fn merge(&mut self, x: i32, y: i32) -> bool {
