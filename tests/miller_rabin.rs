@@ -24,23 +24,15 @@ fn miller_rabin(n: T) -> bool {
     }
 
     primes.iter().all(|&prime| {
-        let mut s = 0;
         let mut d = n - 1;
         while d % 2 == 0 {
-            d /= 2;
-            s += 1;
-        }
-        let x = pow_mod(prime, d, n);
-        if x == 1 || x + 1 == n {
-            return true;
-        }
-        for _ in 0..s - 1 {
-            let x = x * x % n;
-            if x + 1 == n {
+            if pow_mod(prime, d, n) == n - 1 {
                 return true;
             }
+            d /= 2;
         }
-        false
+        let tmp = pow_mod(prime, d, n);
+        tmp == n - 1 || tmp == 1
     })
 }
 
@@ -57,6 +49,7 @@ fn test_miller_rabin() {
     assert!(!miller_rabin(9));
     assert!(!miller_rabin(10));
     assert!(miller_rabin(11));
+    assert!(miller_rabin(104729));
     assert!(miller_rabin(1_000_000_007));
     assert!(!miller_rabin(1_000_000_008));
 }
