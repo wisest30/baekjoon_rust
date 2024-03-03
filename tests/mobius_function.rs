@@ -33,6 +33,17 @@ pub fn mobius_function(n: i64) -> Vec<i64> {
     mobius_function
 }
 
+pub fn mobius_function_slow(n: i64) -> Vec<i64> {
+    let mut mobius_function = vec![0; (n + 1) as usize];
+    mobius_function[1] = 1;
+    for i in 1..=n as usize {
+        for j in (2 * i..=n as usize).step_by(i) {
+            mobius_function[j] -= mobius_function[i];
+        }
+    }
+    mobius_function
+}
+
 #[test]
 fn test_mobius_function() {
     let v = mobius_function(100);
@@ -45,4 +56,5 @@ fn test_mobius_function() {
             -1, -1, 0, 0, 1, -1, 0, 1, 1, 1, 0, -1, 0, 1, 0, 1, 1, 1, 0, -1, 0, 0, 0
         ]
     );
+    assert_eq!(v, mobius_function_slow(100));
 }
