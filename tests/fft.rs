@@ -66,67 +66,77 @@ impl<T> Complex<T> {
     }
 }
 
-// assert size of 'a' is 2 ^ (n + 1). {original vector size} <= 2 ^ n.
-// x0 : 1의 n 제곱근.
-// reference : https://m.blog.naver.com/kks227/221633584963
-fn fft(mut a: Vec<Complex<f64>>, w: Complex<f64>) -> Vec<Complex<f64>> {
-    if a.len() == 1 {
-        return a;
-    }
-
-    let even = (0..a.len()).step_by(2).map(|i| a[i]).collect::<Vec<_>>();
-    let odd = (1..a.len()).step_by(2).map(|i| a[i]).collect::<Vec<_>>();
-
-    let even_fft = fft(even, w * w);
-    let odd_fft = fft(odd, w * w);
-
-    let mut w_pow = Complex::new(1.0, 0.0);
-    let a_len = a.len();
-    for i in 0..a.len() / 2 {
-        a[i] = even_fft[i] + w_pow * odd_fft[i];
-        a[i + a_len / 2] = even_fft[i] - w_pow * odd_fft[i];
-        w_pow = w_pow * w;
-    }
-
-    a
-}
-
-fn idft(a: Vec<Complex<f64>>, w: Complex<f64>) -> Vec<Complex<f64>> {
-    let mut a = fft(a, Complex::new(1.0, 0.0) / w);
-    let p = Complex::new(a.len() as f64, 0.0);
-    for i in 0..a.len() {
-        a[i] = a[i] / p;
-    }
-
-    a
-}
-
-fn fft_multiply(a: &Vec<Complex<f64>>, b: &Vec<Complex<f64>>) -> Vec<Complex<f64>> {
+// reference : https://cp-algorithms.com/algebra/fft.html
+fn fft(mut a: Vec<Complex<f64>>, invert: bool) -> Vec<Complex<f64>> {
     use std::f64::consts::PI;
 
-    let ori_sz = a.len().max(b.len());
-    let mut sz = 1usize;
-    while sz < ori_sz {
-        sz <<= 1;
+    fn reverse(num: usize, lg_n: usize) -> usize {
+        (0..lg_n)
+            .filter(|i| (num & (1 << i)) != 0)
+            .map(|i| 1 << (lg_n - 1 - i))
+            .fold(0usize, |acc, x| acc ^ x)
     }
-    sz <<= 1;
 
-    let mut a = a.clone();
-    a.resize(sz, Complex::new(0.0, 0.0));
-    let mut b = b.clone();
-    b.resize(sz, Complex::new(0.0, 0.0));
+    let mut lg_n = 0usize;
+    while (1 << lg_n) < a.len() {
+        lg_n += 1;
+    }
 
-    let n = sz as f64;
-    let w = Complex::new(f64::cos(2.0 * PI / n), f64::sin(2.0 * PI / n));
-    let a_fft = fft(a, w);
-    let b_fft = fft(b, w);
+    if a.len() < (1 << lg_n) {
+        a.resize(1 << lg_n, Complex::new(0.0, 0.0));
+    }
+
+    for i in 0..a.len() {
+        let j = reverse(i, lg_n);
+        if i < j {
+            (a[i], a[j]) = (a[j], a[i]);
+        }
+    }
+
+    let mut len = 2;
+    while len <= a.len() {
+        let ang = 2.0 * PI / len as f64 * if invert { -1.0 } else { 1.0 };
+        let w = Complex::new(f64::cos(ang), f64::sin(ang));
+        for i in (0..a.len()).step_by(len) {
+            let mut w_pow = Complex::new(1.0, 0.0);
+            for j in 0..len / 2 {
+                let (u, v) = (a[i + j], a[i + j + len / 2] * w_pow);
+                (a[i + j], a[i + j + len / 2]) = (u + v, u - v);
+                w_pow = w_pow * w;
+            }
+        }
+
+        len <<= 1;
+    }
+
+    if invert {
+        let a_len = a.len() as f64;
+        for x in &mut a {
+            x.real /= a_len;
+            x.im /= a_len;
+        }
+    }
+
+    a
+}
+
+fn fft_multiply(mut a: Vec<Complex<f64>>, mut b: Vec<Complex<f64>>) -> Vec<Complex<f64>> {
+    let mut n = 1usize;
+    while n < a.len() + b.len() {
+        n <<= 1;
+    }
+    a.resize(n, Complex::new(0.0, 0.0));
+    b.resize(n, Complex::new(0.0, 0.0));
+
+    let a_fft = fft(a, false);
+    let b_fft = fft(b, false);
     let c_fft = a_fft
         .into_iter()
         .zip(b_fft.into_iter())
         .map(|(ai, bi)| ai * bi)
         .collect::<Vec<_>>();
 
-    idft(c_fft, w)
+    fft(c_fft, true)
 }
 
 #[test]
@@ -143,7 +153,7 @@ fn test_fft() {
         Complex::new(6.0, 0.0),
     ];
 
-    let mut c = fft_multiply(&a, &b);
+    let mut c = fft_multiply(a, b);
     c.iter_mut().for_each(|c| {
         c.real = c.real.round();
         c.im = c.im.round();
